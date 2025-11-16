@@ -1,20 +1,42 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import blogs from '../../blogData';
+import connectDB from '../../../database/db';
+import Blog from '../../../database/blogSchema';
 import styles from './page.module.css';
 
 type Props = {
-  params: Promise<{ slug: string }>  // Changed to Promise
+  params: Promise<{ slug: string }>;
 };
 
+async function getBlog(slug: string) {
+  await connectDB();
+
+  try {
+    const blog = await Blog.findOne({ slug }).orFail();
+    // Convert MongoDB document to plain object
+    return {
+      title: blog.title,
+      slug: blog.slug,
+      date: blog.date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      description: blog.description,
+      image: blog.image,
+      imageAlt: blog.imageAlt,
+      content: blog.content,
+    };
+  } catch (err) {
+    return null;
+  }
+}
+
 export default async function BlogPost({ params }: Props) {
-  // Await the params
   const { slug } = await params;
   
-  // Find the blog post that matches the slug
-  const blog = blogs.find((b) => b.slug === slug);
+  const blog = await getBlog(slug);
 
-  // If no blog found, show 404
   if (!blog) {
     notFound();
   }
@@ -34,24 +56,10 @@ export default async function BlogPost({ params }: Props) {
             className={styles.blogImage}
           />
 
-          <div className={styles.blogContent}>
-            <p>{blog.description}</p>
-
-            {/* Add your full blog content here based on the slug */}
-            {blog.slug === 'introduction-to-json' && (
-              <>
-                <h2>What is JSON?</h2>
-                <p>JSON (JavaScript Object Notation) is commonly used on the frontend to structure data...</p>
-              </>
-            )}
-
-            {blog.slug === 'backend-for-beginners' && (
-              <>
-                <h2>Understanding the Backend</h2>
-                <p>The backend is the engine of the website...</p>
-              </>
-            )}
-          </div>
+          <div 
+            className={styles.blogContent}
+            dangerouslySetInnerHTML={{ __html: blog.content }}
+          />
         </article>
       </main>
     </div>
