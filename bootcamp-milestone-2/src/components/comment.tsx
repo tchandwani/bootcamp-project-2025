@@ -1,8 +1,5 @@
-type IComment = {
-  user: string;
-  comment: string;
-  time: Date;
-};
+import React from "react";
+import type { IComment } from "../database/blogSchema";
 
 type CommentProps = {
   comment: IComment;
@@ -10,26 +7,17 @@ type CommentProps = {
 
 function parseCommentTime(time: Date): string {
   const date = new Date(time);
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
-  
-  const month = months[date.getMonth()];
-  const day = date.getDate();
-  const year = date.getFullYear();
-  
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-  
-  return `${month} ${day} ${year} ${hours}:${minutesStr}${ampm}`;
+  return date.toLocaleString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
-function Comment({ comment }: CommentProps) {
+export default function Comment({ comment }: CommentProps) {
   return (
     <div style={{ 
       border: '1px solid #ddd', 
@@ -46,4 +34,3 @@ function Comment({ comment }: CommentProps) {
   );
 }
 
-export default Comment;
