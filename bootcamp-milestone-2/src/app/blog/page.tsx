@@ -1,61 +1,95 @@
-import BlogPreview from '../../components/blogPreview';
-import connectDB from '../../database/db';
-import Blog from '../../database/blogSchema';
+import { notFound } from "next/navigation";
+import Image from "next/image";
+import connectDB from "../../database/db";
+import Blog from "../../database/blogSchema";
+import Comment from "../../components/comment";
+import styles from "./page.module.css";
 
-async function getBlogs() {
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+async function getBlog(slug: string) {
   await connectDB();
 
   try {
-    const blogs = await Blog.find().sort({ date: -1 }).orFail();
-    // Convert MongoDB documents to plain objects and format the date
-    return blogs.map(blog => ({
+    const blog = await Blog.findOne({ slug }).orFail();
+
+    const commentsArray =
+      blog.comments && Array.isArray(blog.comments)
+        ? blog.comments.map((comment: any) => ({
+            user: String(comment.user),
+            comment: String(comment.comment),
+            time: new Date(comment.time),
+          }))
+        : console.log("==================");
+console.log("COMMENTS FOUND:", commentsArray.length);
+console.log("Comments data:", commentsArray);
+console.log("==================");
+
+    console.log("Comments found:", commentsArray.length);
+
+    return {
       title: blog.title,
       slug: blog.slug,
-      date: blog.date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
+      date: blog.date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       }),
       description: blog.description,
       image: blog.image,
       imageAlt: blog.imageAlt,
-    }));
+      content: String(blog.content),
+      comments: commentsArray,
+    };
   } catch (err) {
-    console.error('Error fetching blogs:', err);
+    console.error("Error fetching blog:", err);
     return null;
   }
 }
 
-export default async function BlogPage() {
-  const blogs = await getBlogs();
+export default async function BlogPost({ params }: Props) {
+  const { slug } = await params;
 
-  if (!blogs || blogs.length === 0) {
-    return (
-      <main>
-        <h1 className="page-title">My Blog</h1>
-        <div className="blog-container">
-          <p>No blogs found.</p>
-        </div>
-      </main>
-    );
+  const blog = await getBlog(slug);
+
+  if (!blog) {
+    notFound();
   }
 
   return (
-    <main>
-      <h1 className="page-title">My Blog</h1>
-      <div className="blog-container">
-        {blogs.map((blog) => (
-          <BlogPreview
-            key={blog.slug}
-            title={blog.title}
-            date={blog.date}
-            description={blog.description}
-            image={blog.image}
-            imageAlt={blog.imageAlt}
-            slug={blog.slug}
+    <div>
+      <main className={styles.main}>
+        <article className={styles.blogPost}>
+          <h1 className={styles.blogTitle}>{blog.title}</h1>
+          <p className={styles.blogDate}>{blog.date}</p>
+
+          <Image
+            src={blog.image}
+            alt={blog.imageAlt}
+            width={700}
+            height={400}
+            className={styles.blogImage}
           />
-        ))}
-      </div>
-    </main>
+
+          <div
+            className={styles.blogContent}
+            dangerouslySetInnerHTML={{ __html: blog.content }}
+          />
+
+          <div className={styles.commentsSection}>
+            <h2>Comments</h2>
+            {blog.comments.length > 0 ? (
+              blog.comments.map((comment, index) => (
+                <Comment key={index} comment={comment} />
+              ))
+            ) : (
+              <p>No comments yet.</p>
+            )}
+          </div>
+        </article>
+      </main>
+    </div>
   );
 }
