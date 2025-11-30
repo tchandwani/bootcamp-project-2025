@@ -1,41 +1,21 @@
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import connectDB from '../../../database/db';
-import Blog from '../../../database/blogSchema';
+import BlogModel from '../../../database/blogSchema';
+import type { Blog } from '../../../database/blogSchema';
+import Comment from '../../../components/comment';
 import styles from './page.module.css';
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-async function getBlog(slug: string) {
-  await connectDB();
-
-  try {
-    const blog = await Blog.findOne({ slug }).orFail();
-    // Convert MongoDB document to plain object
-    return {
-      title: blog.title,
-      slug: blog.slug,
-      date: blog.date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-      description: blog.description,
-      image: blog.image,
-      imageAlt: blog.imageAlt,
-      content: blog.content,
-    };
-  } catch (err) {
-    return null;
-  }
-}
-
 export default async function BlogPost({ params }: Props) {
   const { slug } = await params;
-  
-  const blog = await getBlog(slug);
+
+  await connectDB();
+  const blog: Blog | null = await BlogModel.findOne({ slug }).lean();
+
 
   if (!blog) {
     notFound();
@@ -46,7 +26,9 @@ export default async function BlogPost({ params }: Props) {
       <main className={styles.main}>
         <article className={styles.blogPost}>
           <h1 className={styles.blogTitle}>{blog.title}</h1>
-          <p className={styles.blogDate}>{blog.date}</p>
+          <p className={styles.blogDate}>
+            {new Date(blog.date).toLocaleDateString()}
+          </p>
 
           <Image
             src={blog.image}
@@ -60,6 +42,17 @@ export default async function BlogPost({ params }: Props) {
             className={styles.blogContent}
             dangerouslySetInnerHTML={{ __html: blog.content }}
           />
+
+          <section style={{ marginTop: "2rem" }}>
+            <h3>Comments</h3>
+            {blog.comments && blog.comments.length > 0 ? (
+              blog.comments.map((comment, index) => (
+                <Comment key={index} comment={comment} />
+              ))
+            ) : (
+              <p>No comments yet</p>
+            )}
+          </section>
         </article>
       </main>
     </div>
