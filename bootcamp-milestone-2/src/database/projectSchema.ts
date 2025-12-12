@@ -1,5 +1,11 @@
 import mongoose, { Schema } from "mongoose";
 
+export type IComment = {
+  user: string;
+  comment: string;
+  time: Date;
+};
+
 // TypeScript type
 type Project = {
   title: string;
@@ -9,6 +15,13 @@ type Project = {
   imageAlt: string;
   link: string;
 };
+
+//comment shcema 
+const commentSchema = new Schema<IComment>({
+  user: { type: String, required: true },
+  comment: { type: String, required: true },
+  time: { type: Date, required: true, default: new Date() },
+});
 
 // Mongoose schema
 const projectSchema = new Schema<Project>({
