@@ -2,10 +2,19 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import style from './blogPreview.module.css';
-import type { Blog } from '@/app/blogData';
+import type { Blog } from '../database/blogSchema';
 
-export default function BlogPreview({ title, date, description, image, imageAlt, slug }: Blog) {
-  return (
+type BlogPreviewProps = {
+  title: string;
+  date: Date;
+  description: string;
+  image: string;
+  imageAlt: string;
+  slug: string;
+};
+
+export default function BlogPreview({ title, date, description, image, imageAlt, slug }: BlogPreviewProps) {
+    return (
     <div className={style.blogPost}>
       <h3>{title}</h3>
       <Image 
@@ -16,11 +25,11 @@ export default function BlogPreview({ title, date, description, image, imageAlt,
         className={style.blogImage}
       />
       <p className={style.blogDescription}>{description}</p>
-      <p className={style.blogDate}>Posted on {date}</p>
+      <p className={style.blogDate}>Posted on {new Date(date).toLocaleDateString()}</p>
       
       <Link href={`/blog/${slug}`} className={style.readMore}>
         Read More →
       </Link>
     </div>
-  );
+    );
 }

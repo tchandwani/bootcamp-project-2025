@@ -14,9 +14,7 @@ export default async function BlogPost({ params }: Props) {
   const { slug } = await params;
 
   await connectDB();
-  const blog: Blog | null = await BlogModel.findOne({ slug }).lean();
-
-
+  const blog = await BlogModel.findOne({ slug }).lean() as any;
   if (!blog) {
     notFound();
   }
@@ -46,7 +44,7 @@ export default async function BlogPost({ params }: Props) {
           <section style={{ marginTop: "2rem" }}>
             <h3>Comments</h3>
             {blog.comments && blog.comments.length > 0 ? (
-              blog.comments.map((comment, index) => (
+              blog.comments.map((comment: any, index: number) => (
                 <Comment key={index} comment={comment} />
               ))
             ) : (

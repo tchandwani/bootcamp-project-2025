@@ -1,21 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '../../../../database/db';
-import Blog from '../../../../database/blogSchema';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "../../../../database/db";
+import BlogModel from "../../../../database/blogSchema";
 
-type IParams = {
-  params: {
-    slug: string;
-  };
-};
+interface IParams {
+  params: Promise<{ slug: string }>;
+}
 
 export async function GET(req: NextRequest, { params }: IParams) {
   await connectDB();
-  const { slug } = params;
+  const { slug } = await params; // CHANGED: Added 'await'
 
   try {
-    const blog = await Blog.findOne({ slug }).orFail();
+    const blog = await BlogModel.findOne({ slug }).orFail();
     return NextResponse.json(blog);
   } catch (err) {
-    return NextResponse.json('Blog not found.', { status: 404 });
+    return NextResponse.json({ error: "Blog not found" }, { status: 404 });
   }
 }
